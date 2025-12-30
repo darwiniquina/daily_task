@@ -10,6 +10,7 @@ import TaskItem from '@/components/tasks/TaskItem.vue'
 import AddTask from '@/components/tasks/AddTask.vue'
 import FocusModal from '@/components/tasks/FocusModal.vue'
 import type { Task } from '@/types'
+import { formatTimerDisplay } from '@/utils/formatters'
 
 const authStore = useAuthStore()
 const taskStore = useTaskStore()
@@ -53,11 +54,7 @@ const activeTask = computed(() => {
 })
 
 const formattedTime = computed(() => {
-  const seconds = timerStore.elapsedTime
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = seconds % 60
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+  return formatTimerDisplay(timerStore.elapsedTime)
 })
 </script>
 

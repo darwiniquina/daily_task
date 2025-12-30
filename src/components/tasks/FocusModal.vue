@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog'
 import { Square, Loader2 } from 'lucide-vue-next'
 import type { Task } from '@/types'
+import { formatTimerDisplay } from '@/utils/formatters'
 
 const props = defineProps<{
   open: boolean
@@ -21,11 +22,7 @@ const emit = defineEmits(['update:open', 'stop'])
 const timerStore = useTimerStore()
 
 const formattedTime = computed(() => {
-  const seconds = timerStore.elapsedTime
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = seconds % 60
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+  return formatTimerDisplay(timerStore.elapsedTime)
 })
 
 const handleStop = () => {

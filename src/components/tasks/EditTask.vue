@@ -16,7 +16,7 @@ import {
 import { Pencil } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import type { Task } from '@/types'
-import ToolTipWrapper from '../ui/tooltip/ToolTipWrapper.vue'
+import ToolTipWrapper from '../ui/tooltip/TooltipWrapper.vue'
 
 const props = defineProps<{
   task: Task

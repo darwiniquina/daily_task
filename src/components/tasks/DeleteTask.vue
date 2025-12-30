@@ -20,7 +20,7 @@ import {
 import type { Task } from '@/types'
 import { useTaskStore } from '@/stores/tasks'
 import { toast } from 'vue-sonner'
-import ToolTipWrapper from '../ui/tooltip/ToolTipWrapper.vue'
+import ToolTipWrapper from '../ui/tooltip/TooltipWrapper.vue'
 
 const taskStore = useTaskStore()
 const open = ref(false)
