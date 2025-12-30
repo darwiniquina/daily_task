@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import * as z from 'zod'
@@ -25,6 +26,7 @@ import { Button } from '@/components/ui/button'
 
 const isLoading = ref(false)
 const errorMessage = ref('')
+const router = useRouter()
 
 const loginSchema = toTypedSchema(z.object({
   email: z.string().email({ message: 'Invalid email address' }),
@@ -45,6 +47,7 @@ const onLogin = handleSubmit(async (values) => {
     })
     if (error) throw error
     toast.success('Logged in successfully')
+    router.push('/')
   } catch (error: any) {
     errorMessage.value = error.message
   } finally {
