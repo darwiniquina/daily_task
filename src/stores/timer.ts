@@ -84,6 +84,43 @@ export const useTimerStore = defineStore('timer', () => {
         }
     }
 
+    const todaysFocusSeconds = ref(0)
+
+    const fetchTodaysFocusTime = async () => {
+        if (!authStore.user) return
+
+        try {
+            const now = new Date()
+
+            const startOfDay = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate()
+            )
+
+            const endOfDay = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate() + 1
+            )
+
+            const { data, error } = await supabase
+                .from('timers')
+                .select('duration, start_time')
+                .gte('start_time', startOfDay.toISOString())
+                .lt('start_time', endOfDay.toISOString())
+
+            console.log("Fetch today's focus time:", data)
+
+            if (error) throw error
+
+            const total = (data as Timer[]).reduce((sum, timer) => sum + (timer.duration || 0), 0)
+            todaysFocusSeconds.value = total
+        } catch (error: any) {
+            console.error('Error fetching today\'s focus time:', error.message)
+        }
+    }
+
     const startTimer = async (taskId: string) => {
         if (!authStore.user) return
 
@@ -138,6 +175,9 @@ export const useTimerStore = defineStore('timer', () => {
             // Refresh timers for this task
             await fetchTaskTimers(taskId)
 
+            // Refresh today's total focus time
+            await fetchTodaysFocusTime()
+
             toast.success('Timer stopped')
         } catch (error: any) {
             toast.error('Error stopping timer: ' + error.message)
@@ -149,8 +189,10 @@ export const useTimerStore = defineStore('timer', () => {
         taskTimers,
         loading,
         elapsedTime,
+        todaysFocusSeconds,
         fetchActiveTimer,
         fetchTaskTimers,
+        fetchTodaysFocusTime,
         startTimer,
         stopTimer
     }
