@@ -14,10 +14,13 @@ import { toast } from 'vue-sonner'
 import TaskItem from '@/components/tasks/TaskItem.vue'
 import AddTask from '@/components/tasks/AddTask.vue'
 import FocusModal from '@/components/tasks/FocusModal.vue'
+import TodayFocusWidget from '@/components/dashboard/TodayFocusWidget.vue'
+import TaskProgressWidget from '@/components/dashboard/TaskProgressWidget.vue'
+import ProTipWidget from '@/components/dashboard/ProTipWidget.vue'
 import type { Task } from '@/types'
 import { formatTimerDisplay } from '@/utils/formatters'
 import { CalendarDate } from '@internationalized/date'
-import { Search, Filter } from 'lucide-vue-next'
+import { Search, Zap, LogOut, Filter } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const taskStore = useTaskStore()
@@ -100,88 +103,128 @@ const rangeLabel = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col">
-    <header class="bg-white border-b sticky top-0 z-20">
-      <div class="container mx-auto px-4 h-16 flex items-center justify-between">
-        <h1 class="text-xl font-bold text-gray-900">DayTracker</h1>
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
+    <header class="bg-white/80 backdrop-blur-md border-b sticky top-0 z-30">
+      <div class="container mx-auto px-6 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="bg-blue-600 p-1.5 rounded-lg">
+            <Zap class="h-5 w-5 text-white" />
+          </div>
+          <h1 class="text-xl font-black tracking-tight text-gray-900">DayTracker</h1>
+        </div>
         <div class="flex items-center gap-4">
-          <span class="text-sm text-gray-500 hidden md:inline">{{ authStore.user?.email }}</span>
-          <Button variant="outline" size="sm" @click="handleLogout">Logout</Button>
+          <div class="hidden md:flex flex-col items-end mr-2">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Authenticated</span>
+            <span class="text-sm font-medium text-gray-700 leading-none">{{ authStore.user?.email }}</span>
+          </div>
+          <Button variant="ghost" size="icon" class="rounded-full hover:bg-gray-100" @click="handleLogout">
+            <LogOut class="h-5 w-5 text-gray-500" />
+          </Button>
         </div>
       </div>
     </header>
 
-    <main class="flex-1 container mx-auto px-4 py-8">
-      <div class="max-w-3xl mx-auto space-y-6">
-
-        <!-- Search & Filter Bar -->
-        <div class="flex flex-col sm:flex-row gap-3">
-          <div class="relative flex-1">
-            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input v-model="taskStore.searchQuery" placeholder="Search tasks by title or description..."
-              class="pl-10 bg-white" />
+    <main class="flex-1 container mx-auto px-6 py-10">
+      <div class="max-w-6xl mx-auto">
+        <!-- Header with Search, Filter, and Add Task -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900">Your Tasks</h2>
+            <p class="text-sm text-gray-500">Manage and track your focus sessions</p>
           </div>
+          
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <!-- Search -->
+            <div class="relative flex-1 sm:flex-initial sm:w-64">
+              <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input v-model="taskStore.searchQuery" placeholder="Search tasks..."
+                class="pl-10 bg-white h-10" />
+            </div>
 
-          <Popover>
-            <PopoverTrigger as-child>
-              <Button variant="outline" class="gap-2 bg-white">
-                <Filter class="h-4 w-4" />
-                Filters
-                <span v-if="taskStore.filterFields.length < 3"
-                  class="bg-blue-100 text-blue-600 text-[10px] px-1.5 rounded-full font-bold">
-                  {{ taskStore.filterFields.length }}
-                </span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent class="w-auto p-4 space-y-4" align="end">
-              <div class="space-y-2">
-                <h4 class="font-medium text-sm">Date Range</h4>
-                <RangeCalendar v-model="calendarRange" class="rounded-md border shadow-sm" />
-                <div class="text-xs text-gray-500 text-center">
-                  {{ rangeLabel }}
-                </div>
-              </div>
-
-              <div class="space-y-3 pt-2 border-t">
-                <h4 class="font-medium text-sm">Include Fields</h4>
-                <div class="grid grid-cols-1 gap-2">
-                  <div v-for="field in ['date', 'deadline', 'created_at']" :key="field"
-                    class="flex items-center space-x-2">
-                    <Checkbox :id="'field-' + field" :checked="taskStore.filterFields.includes(field)"
-                      @update:checked="toggleField(field)" />
-                    <Label :for="'field-' + field" class="text-xs capitalize">{{ field.replace('_', ' ') }}</Label>
+            <!-- Filter Popover -->
+            <Popover>
+              <PopoverTrigger as-child>
+                <Button variant="outline" size="sm" class="gap-2 h-10">
+                  <Filter class="h-4 w-4" />
+                  Filters
+                  <span v-if="taskStore.filterFields.length < 3"
+                    class="bg-blue-100 text-blue-600 text-[10px] px-1.5 rounded-full font-bold">
+                    {{ taskStore.filterFields.length }}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-80 p-4 space-y-4" align="end">
+                <div class="space-y-2">
+                  <h4 class="font-semibold text-sm">Date Range</h4>
+                  <RangeCalendar v-model="calendarRange" class="rounded-xl border shadow-sm w-full" />
+                  <div class="px-2 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold text-center">
+                    {{ rangeLabel }}
                   </div>
                 </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+
+                <div class="space-y-3 pt-2 border-t">
+                  <h4 class="font-semibold text-sm">Match Fields</h4>
+                  <div class="grid grid-cols-1 gap-2">
+                    <div v-for="field in ['date', 'deadline', 'created_at']" :key="field"
+                      class="flex items-center justify-between group cursor-pointer" @click="toggleField(field)">
+                      <div class="flex items-center gap-2">
+                         <Checkbox :id="'field-' + field" :checked="taskStore.filterFields.includes(field)"
+                          size="sm" class="pointer-events-none" />
+                        <Label :for="'field-' + field" class="text-sm font-medium capitalize group-hover:text-blue-600 transition-colors pointer-events-none">
+                          {{ field.replace('_', ' ') }}
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <!-- Add Task Button -->
+            <AddTask />
+          </div>
         </div>
 
-        <AddTask />
-
-        <div v-if="taskStore.loading" class="flex flex-col items-center justify-center py-12 space-y-3">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p class="text-sm text-gray-500">Syncing tasks...</p>
-        </div>
-
-        <div v-else class="space-y-2">
-          <div v-if="taskStore.filteredTasks.length === 0"
-            class="text-center py-16 bg-white rounded-xl border border-dashed border-gray-300 flex flex-col items-center justify-center shadow-sm">
-            <div class="h-24 w-24 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-              <Search class="h-10 w-10 text-gray-300" />
-            </div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-1">No matches found</h3>
-            <p class="text-sm text-gray-500 max-w-xs mx-auto mb-6">Adjust your search or filters to find what you're
-              looking for.</p>
-            <Button variant="ghost" size="sm" class="text-blue-600"
-              @click="taskStore.searchQuery = ''; taskStore.filterFields = ['date', 'created_at', 'deadline']">
-              Reset Filters
-            </Button>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          <!-- Left Column (Sidebar - Modular Widgets) -->
+          <div class="lg:col-span-4 space-y-6 sticky top-24">
+            <TodayFocusWidget />
+            <TaskProgressWidget :tasks="taskStore.tasks" />
+            <ProTipWidget />
           </div>
 
-          <TaskItem v-for="task in taskStore.filteredTasks" :key="task.id" :task="task"
-            :is-active="timerStore.activeTimer?.task_id === task.id" @start-timer="startTimer"
-            @stop-timer="stopTimer" />
+          <!-- Right Column (Tasks Feed) -->
+          <div class="lg:col-span-8 space-y-6">
+            <div v-if="taskStore.loading" class="flex flex-col items-center justify-center py-24 space-y-4 bg-white rounded-3xl border border-dashed shadow-sm">
+              <div class="relative h-12 w-12">
+                <div class="absolute inset-0 rounded-full border-4 border-blue-50 border-t-blue-600 animate-spin"></div>
+              </div>
+              <p class="text-sm font-medium text-gray-500 tracking-wide uppercase">Syncing your productivity...</p>
+            </div>
+
+            <div v-else class="space-y-4">
+              <div v-if="taskStore.filteredTasks.length === 0"
+                class="text-center py-24 bg-white rounded-3xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center shadow-sm px-6">
+                <div class="h-20 w-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
+                  <Search class="h-8 w-8 text-blue-500" />
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">No tasks found</h3>
+                <p class="text-gray-500 max-w-sm mx-auto mb-8 text-lg">We couldn't find any tasks matching your current filters. Try adjusting your search or date range.</p>
+                <Button variant="default" size="lg" class="rounded-full px-8 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200"
+                  @click="taskStore.searchQuery = ''; taskStore.filterFields = ['date', 'created_at', 'deadline']">
+                  Clear All Filters
+                </Button>
+              </div>
+
+              <div class="grid grid-cols-1 gap-4">
+                <TaskItem v-for="task in taskStore.filteredTasks" :key="task.id" :task="task"
+                  :is-active="timerStore.activeTimer?.task_id === task.id" @start-timer="startTimer"
+                  @stop-timer="stopTimer" />
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </main>
