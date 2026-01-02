@@ -30,6 +30,7 @@ import type { DateValue } from '@internationalized/date'
 
 const props = defineProps<{
   task: Task
+  asMenuItem?: boolean
 }>()
 
 const taskStore = useTaskStore()
@@ -140,7 +141,16 @@ const onSubmit = async () => {
 
 <template>
   <Dialog v-model:open="open">
-    <ToolTipWrapper text="Edit Task">
+    <!-- Menu Item Version -->
+    <DialogTrigger v-if="asMenuItem" as-child>
+      <Button variant="ghost" size="sm" class="justify-start text-sm font-normal hover:bg-blue-50 hover:text-blue-700">
+        <Pencil class="w-4 h-4 mr-2" />
+        Edit Task
+      </Button>
+    </DialogTrigger>
+
+    <!-- Icon Button Version -->
+    <ToolTipWrapper v-else text="Edit Task">
       <DialogTrigger as-child>
         <Button variant="ghost" size="sm">
           <Pencil class="h-4 w-4" />

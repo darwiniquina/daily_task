@@ -11,12 +11,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Trash } from 'lucide-vue-next'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 import type { Task } from '@/types'
 import { useTaskStore } from '@/stores/tasks'
 import { toast } from 'vue-sonner'
@@ -28,6 +22,7 @@ const loading = ref(false)
 
 const props = defineProps<{
   task: Task
+  asMenuItem?: boolean
 }>()
 
 const onSubmit = async () => {
@@ -45,7 +40,14 @@ const onSubmit = async () => {
 <template>
   <Dialog v-model:open="open">
 
-    <ToolTipWrapper text="Delete Task">
+    <DialogTrigger v-if="asMenuItem" as-child>
+      <Button variant="ghost" size="sm" class="justify-start text-sm font-normal hover:bg-red-50 hover:text-red-700">
+        <Trash class="w-4 h-4 mr-2" />
+        Delete Task
+      </Button>
+    </DialogTrigger>
+
+    <ToolTipWrapper v-else text="Delete Task">
       <DialogTrigger as-child>
         <Button variant="destructive" size="sm">
           <Trash class="h-4 w-4" />

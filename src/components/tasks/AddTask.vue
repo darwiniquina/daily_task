@@ -114,8 +114,8 @@ const onSubmit = async () => {
 <template>
   <Dialog v-model:open="open">
     <DialogTrigger as-child>
-      <Button class="w-full mb-6">
-        <Plus class="mr-2 h-4 w-4" /> Add New Task
+      <Button class="rounded-2xl shadow-md hover:shadow-lg transition-all bg-blue-600 hover:bg-blue-700 text-white px-6 h-11 font-bold">
+        <Plus class="mr-2 h-5 w-5" /> Add New Task
       </Button>
     </DialogTrigger>
     <DialogContent class="sm:max-w-[500px]">

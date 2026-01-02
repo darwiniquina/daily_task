@@ -2,13 +2,14 @@
 import { onMounted, computed } from 'vue'
 import { type Task } from '@/types'
 import { Button } from '@/components/ui/button'
-import { Play, Check, Undo2, Clock } from 'lucide-vue-next'
+import { Play, Check, Undo2, Clock, MoreVertical } from 'lucide-vue-next'
 import { useTaskStore } from '@/stores/tasks'
 import { useTimerStore } from '@/stores/timer'
 import DeleteTask from './DeleteTask.vue'
 import EditTask from './EditTask.vue'
 import ToolTipWrapper from '../ui/tooltip/TooltipWrapper.vue'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { formatDate, formatTimeOnly, formatDuration, formatTotalDuration, getDeadlineStatus } from '@/utils/formatters'
 import { Badge } from '@/components/ui/badge'
 
@@ -50,93 +51,123 @@ const markAsIncomplete = () => {
 </script>
 
 <template>
-    <div class="bg-white rounded-lg shadow-sm border mb-3 overflow-hidden transition-all hover:shadow-md"
-        :class="{ 'border-blue-500 ring-1 ring-blue-500': isActive, 'bg-green-50': task.completed }">
-        <div :class="{ 'bg-green-50': task.completed }" class="p-4 flex items-start justify-between relative z-10">
-            <div class="flex-1 mr-4 min-w-0">
-                <div class="flex items-center gap-2 mb-1 flex-wrap">
-                    <h3 class="font-medium text-gray-900 text-lg truncate max-w-full"
-                        :class="{ 'text-blue-700': isActive, 'line-through text-gray-400': task.completed }">
-                        {{ task.title }}
-                    </h3>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-gray-300 group"
+        :class="{ 'ring-2 ring-blue-400 border-blue-400 shadow-blue-50': isActive, 'bg-green-50/30 border-green-200': task.completed }">
+        <div class="p-5">
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0 space-y-2.5">
+                    <!-- Title & Status Row -->
+                    <div class="flex items-start gap-3 flex-wrap">
+                        <h3 class="font-semibold text-gray-900 text-lg leading-tight flex-1 min-w-0"
+                            :class="{ 'text-blue-700': isActive, 'line-through text-gray-500': task.completed }">
+                            {{ task.title }}
+                        </h3>
+                        
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <Badge v-if="deadlineStatus && !task.completed" 
+                                :variant="deadlineStatus.overdue ? 'destructive' : (deadlineStatus.isClose ? 'default' : 'outline')" 
+                                class="text-xs">
+                                {{ deadlineStatus.label }}
+                            </Badge>
 
-                    <Badge v-if="deadlineStatus && !task.completed" :variant="deadlineStatus.overdue ? 'secondary' : (deadlineStatus.isClose ? 'default' : 'outline')" class="ml-auto">
-                        {{ deadlineStatus.label }}
-                    </Badge>
+                            <div v-if="task.completed"
+                                class="bg-green-600 text-white text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1">
+                                <Check class="w-3 h-3" />
+                                Done
+                            </div>
+                            
+                            <div v-if="totalDuration > 0"
+                                class="text-xs font-mono bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full border border-blue-200 font-medium">
+                                {{ formatTotalDuration(totalDuration) }}
+                            </div>
+                        </div>
+                    </div>
 
-                    <span v-if="task.completed"
-                        class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium flex items-center">
-                        <Check class="w-3 h-3 mr-1" />
-                        Completed
-                    </span>
-                    <span v-if="totalDuration > 0"
-                        class="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md border">
-                        Total: {{ formatTotalDuration(totalDuration) }}
-                    </span>
+                    <!-- Description -->
+                    <p v-if="task.description" class="text-sm text-gray-600 leading-relaxed line-clamp-2" :title="task.description">
+                        {{ task.description }}
+                    </p>
+
+                    <!-- Metadata -->
+                    <div class="flex items-center gap-4 text-xs text-gray-500">
+                        <span v-if="task.deadline" class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+                            <Clock class="w-3 h-3" />
+                            <span class="font-medium">Due {{ formatDate(task.deadline) }}</span>
+                        </span>
+                    </div>
                 </div>
 
-                <p v-if="task.description" class="text-sm text-gray-600 mb-2 line-clamp-2" :title="task.description">{{
-                    task.description }}</p>
+                <!-- Action Buttons -->
+                <div class="flex items-start gap-1.5 shrink-0">
+                    <!-- Focus/Stop Button -->
+                    <ToolTipWrapper v-if="isActive" text="Stop Focus">
+                        <Button variant="default" size="sm" class="rounded-lg" @click="$emit('stop-timer', task)">
+                            <span class="w-2 h-2 bg-white rounded-sm animate-pulse mr-1.5"></span>
+                            Stop
+                        </Button>
+                    </ToolTipWrapper>
 
-                <div class="flex items-center gap-4 text-xs text-gray-500">
-                    <span v-if="task.deadline" class="flex items-center">
-                        <Clock class="w-3 h-3 mr-1" />
-                        Due: {{ formatDate(task.deadline) }}
-                    </span>
+                    <ToolTipWrapper v-else-if="!task.completed" text="Start Focus Session">
+                        <Button variant="outline" size="sm" class="rounded-lg hover:bg-blue-50 hover:border-blue-300" @click="$emit('start-timer', task)">
+                            <Play class="w-3.5 h-3.5 mr-1" />
+                            Focus
+                        </Button>
+                    </ToolTipWrapper>
+
+                    <!-- Undo Button (for completed tasks) -->
+                    <ToolTipWrapper v-if="task.completed" text="Undo Completion">
+                        <Button variant="ghost" size="sm" class="rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                            @click="markAsIncomplete">
+                            <Undo2 class="w-4 h-4" />
+                        </Button>
+                    </ToolTipWrapper>
+
+                    <!-- More Actions Popover -->
+                    <Popover>
+                        <PopoverTrigger as-child>
+                            <Button variant="ghost" size="sm" class="rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100">
+                                <MoreVertical class="w-4 h-4" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent class="w-48 p-2" align="end">
+                            <div class="flex flex-col gap-1">
+                                <!-- Mark as Complete/Incomplete -->
+                                <Button v-if="!task.completed" variant="ghost" size="sm" 
+                                    class="justify-start text-sm font-normal hover:bg-green-50 hover:text-green-700"
+                                    @click="markAsComplete">
+                                    <Check class="w-4 h-4 mr-2" />
+                                    Mark as Done
+                                </Button>
+
+                                <!-- Edit Task -->
+                                <EditTask :task="task" as-menu-item />
+
+                                <!-- Delete Task -->
+                                <DeleteTask :task="task" as-menu-item />
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 </div>
-            </div>
-
-            <div class="flex flex-row gap-1 shrink-0 items-start">
-                <ToolTipWrapper v-if="isActive" text="Stop Focus">
-                    <Button variant="default" size="sm" @click="$emit('stop-timer', task)">
-                        <span class="w-2 h-2 bg-white rounded-sm animate-pulse"></span>
-                    </Button>
-                </ToolTipWrapper>
-
-
-                <ToolTipWrapper v-else-if="!task.completed" text="Focus">
-                    <Button variant="outline" size="sm" @click="$emit('start-timer', task)">
-                        <Play class="w-3 h-3 mr-1" />
-                    </Button>
-                </ToolTipWrapper>
-
-
-                <ToolTipWrapper v-if="!task.completed" text="Mark Done">
-                    <Button variant="ghost" size="sm" class="text-gray-500 hover:text-green-700 hover:bg-green-50"
-                        @click="markAsComplete">
-                        <Check class="w-4 h-4 mr-1" />
-                    </Button>
-                </ToolTipWrapper>
-
-                <ToolTipWrapper v-else text="Undo Completion">
-                    <Button variant="ghost" size="sm" class="text-gray-400 hover:text-gray-600"
-                        @click="markAsIncomplete">
-                        <Undo2 class="w-4 h-4" />
-                    </Button>
-                </ToolTipWrapper>
-
-                <EditTask :task="task" />
-                <DeleteTask :task="task" />
-
             </div>
         </div>
 
-        <!-- Timer History -->
         <!-- Timer History Accordion -->
-        <Accordion v-if="taskTimers.length > 0" type="single" collapsible class="w-full border-t">
+        <Accordion v-if="taskTimers.length > 0" type="single" collapsible class="w-full border-t border-gray-200">
             <AccordionItem value="history" class="border-b-0">
                 <AccordionTrigger
-                    class="px-4 py-2 hover:no-underline hover:bg-gray-50 text-xs text-gray-500 uppercase tracking-wide font-medium">
-                    Session History
+                    class="px-5 py-3 hover:no-underline hover:bg-gray-50 text-xs text-gray-500 uppercase tracking-wide font-medium transition-colors">
+                    <div class="flex items-center gap-2">
+                        <Clock class="w-3.5 h-3.5" />
+                        Session History ({{ taskTimers.length }})
+                    </div>
                 </AccordionTrigger>
-                <AccordionContent class="px-4 pb-3 pt-0 bg-gray-50">
-                    <div class="space-y-1">
+                <AccordionContent class="px-5 pb-4 pt-2 bg-gray-50/50">
+                    <div class="space-y-2">
                         <div v-for="timer in taskTimers" :key="timer.id"
-                            class="flex justify-between text-xs text-gray-600 border-b border-gray-100 last:border-0 pb-1 last:pb-0">
-                            <span>{{ formatDate(timer.start_time) }} - {{ timer.end_time ?
+                            class="flex justify-between items-center text-xs text-gray-600 bg-white rounded-lg px-3 py-2 border border-gray-200">
+                            <span class="font-medium">{{ formatDate(timer.start_time) }} - {{ timer.end_time ?
                                 formatTimeOnly(timer.end_time) : 'Now' }}</span>
-                            <span class="font-mono text-gray-900 font-medium">{{ formatDuration(timer.duration)
-                            }}</span>
+                            <span class="font-mono text-blue-700 font-semibold bg-blue-50 px-2 py-0.5 rounded">{{ formatDuration(timer.duration) }}</span>
                         </div>
                     </div>
                 </AccordionContent>
