@@ -9,7 +9,8 @@ import DeleteTask from './DeleteTask.vue'
 import EditTask from './EditTask.vue'
 import ToolTipWrapper from '../ui/tooltip/TooltipWrapper.vue'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { formatDate, formatTimeOnly, formatDuration, formatTotalDuration } from '@/utils/formatters'
+import { formatDate, formatTimeOnly, formatDuration, formatTotalDuration, getDeadlineStatus } from '@/utils/formatters'
+import { Badge } from '@/components/ui/badge'
 
 const props = defineProps<{
     task: Task
@@ -20,6 +21,11 @@ const emit = defineEmits(['start-timer', 'stop-timer'])
 
 const taskStore = useTaskStore()
 const timerStore = useTimerStore()
+
+const deadlineStatus = computed(() => {
+    if (!props.task.deadline) return null
+    return getDeadlineStatus(props.task.deadline)
+})
 
 onMounted(() => {
     timerStore.fetchTaskTimers(props.task.id)
@@ -53,6 +59,11 @@ const markAsIncomplete = () => {
                         :class="{ 'text-blue-700': isActive, 'line-through text-gray-400': task.completed }">
                         {{ task.title }}
                     </h3>
+
+                    <Badge v-if="deadlineStatus && !task.completed" :variant="deadlineStatus.overdue ? 'secondary' : (deadlineStatus.isClose ? 'default' : 'outline')" class="ml-auto">
+                        {{ deadlineStatus.label }}
+                    </Badge>
+
                     <span v-if="task.completed"
                         class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium flex items-center">
                         <Check class="w-3 h-3 mr-1" />

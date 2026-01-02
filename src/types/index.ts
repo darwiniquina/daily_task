@@ -7,6 +7,7 @@ export interface Task {
     completed: boolean
     created_at: string
     updated_at: string
+    date?: string
 }
 
 export interface Timer {

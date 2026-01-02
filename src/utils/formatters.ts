@@ -42,3 +42,18 @@ export const formatTimerDisplay = (seconds: number): string => {
     const s = seconds % 60
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
+
+import { formatDistanceToNow, isPast } from 'date-fns'
+
+export const getDeadlineStatus = (deadline: string) => {
+    const date = new Date(deadline)
+    const overdue = isPast(date)
+    const distance = formatDistanceToNow(date, { addSuffix: true })
+
+    return {
+        overdue,
+        label: overdue ? `Overdue ${distance}` : `Due ${distance}`,
+        isClose: !overdue && (date.getTime() - Date.now()) < 3600000 * 24 // Close if within 24 hours
+    }
+}
+
