@@ -13,6 +13,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { formatDate, formatTimeOnly, formatDuration, formatTotalDuration, getDeadlineStatus } from '@/utils/formatters'
 import { Badge } from '@/components/ui/badge'
 
+import confetti from 'canvas-confetti'
+
 const props = defineProps<{
     task: Task
     isActive?: boolean
@@ -43,6 +45,12 @@ const totalDuration = computed(() => {
 
 const markAsComplete = () => {
     taskStore.updateTask(props.task.id, { completed: true })
+    confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.6 },
+        colors: ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
+    })
 }
 
 const markAsIncomplete = () => {
