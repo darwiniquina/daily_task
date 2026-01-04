@@ -39,10 +39,8 @@ const form = ref({
 
 watch(open, (isOpen) => {
   if (isOpen) {
-    const dateStr = taskStore.startDate
-    const parts = dateStr.split('-').map(Number)
-
-    form.value.date = new CalendarDate(parts[0] as number, parts[1] as number, parts[2] as number)
+    const today = new Date()
+    form.value.date = new CalendarDate(today.getFullYear(), today.getMonth() + 1, today.getDate())
     form.value.deadlineDate = undefined
     form.value.deadlineTime = ''
   }

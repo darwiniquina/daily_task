@@ -4,11 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useTaskStore } from '@/stores/tasks'
 import { useTimerStore } from '@/stores/timer'
 import { Button } from '@/components/ui/button'
-import { RangeCalendar } from '@/components/ui/range-calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import TaskItem from '@/components/tasks/TaskItem.vue'
@@ -19,8 +15,7 @@ import TaskProgressWidget from '@/components/dashboard/TaskProgressWidget.vue'
 import ProTipWidget from '@/components/dashboard/ProTipWidget.vue'
 import type { Task } from '@/types'
 import { formatTimerDisplay } from '@/utils/formatters'
-import { CalendarDate } from '@internationalized/date'
-import { Search, Zap, LogOut, Filter } from 'lucide-vue-next'
+import { Search, Zap, LogOut } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const taskStore = useTaskStore()
@@ -29,41 +24,12 @@ const router = useRouter()
 
 const showFocusModal = ref(false)
 
-const parseISO = (iso: string) => {
-  const parts = iso.split('-').map(Number)
-  if (parts.length < 3) return new CalendarDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate())
-  return new CalendarDate(parts[0] as number, parts[1] as number, parts[2] as number)
-}
-
-const calendarRange = ref<any>({
-  start: parseISO(taskStore.startDate),
-  end: parseISO(taskStore.endDate)
-})
-
 onMounted(async () => {
   await Promise.all([
     taskStore.fetchTasks(),
     timerStore.fetchActiveTimer()
   ])
 })
-
-watch(calendarRange, async (newVal) => {
-  if (newVal?.start && newVal?.end) {
-    taskStore.startDate = newVal.start.toString()
-    taskStore.endDate = newVal.end.toString()
-    await taskStore.fetchTasks()
-  }
-}, { deep: true })
-
-const toggleField = async (field: string) => {
-  const index = taskStore.filterFields.indexOf(field)
-  if (index > -1) {
-    taskStore.filterFields.splice(index, 1)
-  } else {
-    taskStore.filterFields.push(field)
-  }
-  await taskStore.fetchTasks()
-}
 
 // Auto-open modal when a new timer starts
 watch(() => timerStore.activeTimer, (newVal, oldVal) => {
@@ -95,11 +61,6 @@ const activeTask = computed(() => {
 const formattedTime = computed(() => {
   return formatTimerDisplay(timerStore.elapsedTime)
 })
-
-const rangeLabel = computed(() => {
-  if (taskStore.startDate === taskStore.endDate) return taskStore.startDate
-  return `${taskStore.startDate} to ${taskStore.endDate}`
-})
 </script>
 
 <template>
@@ -126,10 +87,10 @@ const rangeLabel = computed(() => {
 
     <main class="flex-1 container mx-auto px-6 py-10">
       <div class="max-w-6xl mx-auto">
-        <!-- Header with Search, Filter, and Add Task -->
+        <!-- Header with Search and Add Task -->
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h2 class="text-2xl font-bold text-gray-900">Your Tasks</h2>
+            <h2 class="text-2xl font-bold text-gray-900">Today's Tasks</h2>
             <p class="text-sm text-gray-500">Manage and track your focus sessions</p>
           </div>
           
@@ -138,47 +99,8 @@ const rangeLabel = computed(() => {
             <div class="relative flex-1 sm:flex-initial sm:w-64">
               <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input v-model="taskStore.searchQuery" placeholder="Search tasks..."
-                class="pl-10 bg-white h-10" />
+                class="pl-10 bg-white h-10 rounded-xl" />
             </div>
-
-            <!-- Filter Popover -->
-            <Popover>
-              <PopoverTrigger as-child>
-                <Button variant="outline" size="sm" class="gap-2 h-10">
-                  <Filter class="h-4 w-4" />
-                  Filters
-                  <span v-if="taskStore.filterFields.length < 3"
-                    class="bg-blue-100 text-blue-600 text-[10px] px-1.5 rounded-full font-bold">
-                    {{ taskStore.filterFields.length }}
-                  </span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent class="w-80 p-4 space-y-4" align="end">
-                <div class="space-y-2">
-                  <h4 class="font-semibold text-sm">Date Range</h4>
-                  <RangeCalendar v-model="calendarRange" class="rounded-xl border shadow-sm w-full" />
-                  <div class="px-2 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold text-center">
-                    {{ rangeLabel }}
-                  </div>
-                </div>
-
-                <div class="space-y-3 pt-2 border-t">
-                  <h4 class="font-semibold text-sm">Match Fields</h4>
-                  <div class="grid grid-cols-1 gap-2">
-                    <div v-for="field in ['date', 'deadline', 'created_at']" :key="field"
-                      class="flex items-center justify-between group cursor-pointer" @click="toggleField(field)">
-                      <div class="flex items-center gap-2">
-                         <Checkbox :id="'field-' + field" :checked="taskStore.filterFields.includes(field)"
-                          size="sm" class="pointer-events-none" />
-                        <Label :for="'field-' + field" class="text-sm font-medium capitalize group-hover:text-blue-600 transition-colors pointer-events-none">
-                          {{ field.replace('_', ' ') }}
-                        </Label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
 
             <!-- Add Task Button -->
             <AddTask />
@@ -210,10 +132,12 @@ const rangeLabel = computed(() => {
                   <Search class="h-8 w-8 text-blue-500" />
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">No tasks found</h3>
-                <p class="text-gray-500 max-w-sm mx-auto mb-8 text-lg">We couldn't find any tasks matching your current filters. Try adjusting your search or date range.</p>
-                <Button variant="default" size="lg" class="rounded-full px-8 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200"
-                  @click="taskStore.searchQuery = ''; taskStore.filterFields = ['date', 'created_at', 'deadline']">
-                  Clear All Filters
+                <p class="text-gray-500 max-w-sm mx-auto mb-8 text-lg">
+                  {{ taskStore.searchQuery ? "We couldn't find any tasks matching your search." : "You haven't added any tasks for today yet." }}
+                </p>
+                <Button v-if="taskStore.searchQuery" variant="outline" size="lg" class="rounded-full px-8"
+                  @click="taskStore.searchQuery = ''">
+                  Clear Search
                 </Button>
               </div>
 

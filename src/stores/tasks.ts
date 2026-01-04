@@ -15,38 +15,20 @@ export const useTaskStore = defineStore('tasks', () => {
     }
 
     const searchQuery = ref(getSaved('task_search_query', ''))
-    const startDate = ref(getSaved('task_start_date', new Date().toISOString().split('T')[0]))
-    const endDate = ref(getSaved('task_end_date', new Date().toISOString().split('T')[0]))
-    const filterFields = ref<string[]>(getSaved('task_filter_fields', ['date', 'created_at', 'deadline']))
 
     // Persist changes
     watch(searchQuery, (val) => localStorage.setItem('task_search_query', JSON.stringify(val)))
-    watch(startDate, (val) => localStorage.setItem('task_start_date', JSON.stringify(val)))
-    watch(endDate, (val) => localStorage.setItem('task_end_date', JSON.stringify(val)))
-    watch(filterFields, (val) => localStorage.setItem('task_filter_fields', JSON.stringify(val)), { deep: true })
 
     const fetchTasks = async () => {
         try {
             loading.value = true
+            const today = new Date().toLocaleDateString('en-CA')
 
-            let query = supabase
+            const { data, error } = await supabase
                 .from('tasks')
                 .select('*')
-
-            if (filterFields.value.length > 0) {
-                const orParts = filterFields.value.map(field => {
-                    const s = startDate.value.includes('T') ? startDate.value : `${startDate.value}T00:00:00Z`
-                    const e = endDate.value.includes('T') ? endDate.value : `${endDate.value}T23:59:59Z`
-
-                    if (field === 'created_at') {
-                        return `and(${field}.gte.${s},${field}.lte.${e})`
-                    }
-                    return `and(${field}.gte.${startDate.value},${field}.lte.${endDate.value})`
-                })
-                query = query.or(orParts.join(','))
-            }
-
-            const { data, error } = await query.order('created_at', { ascending: false })
+                .eq('date', today)
+                .order('created_at', { ascending: false })
 
             if (error) throw error
             tasks.value = data as Task[]
@@ -69,10 +51,8 @@ export const useTaskStore = defineStore('tasks', () => {
 
     const addTask = async (task: Partial<Task>) => {
         try {
-
-            const dateToUse = startDate.value === endDate.value ? startDate.value : new Date().toISOString().split('T')[0]
-
-            const taskWithDate = { ...task, date: task.date || dateToUse }
+            const today = new Date().toLocaleDateString('en-CA')
+            const taskWithDate = { ...task, date: task.date || today }
 
             const { data, error } = await supabase
                 .from('tasks')
@@ -128,9 +108,6 @@ export const useTaskStore = defineStore('tasks', () => {
         filteredTasks,
         loading,
         searchQuery,
-        startDate,
-        endDate,
-        filterFields,
         fetchTasks,
         addTask,
         updateTask,
