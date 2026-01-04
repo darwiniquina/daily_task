@@ -2,7 +2,6 @@
 import { onMounted, computed, ref, watch } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
 import { useTimerStore } from '@/stores/timer'
-import { useGamificationStore } from '@/stores/gamification'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import TaskItem from '@/components/tasks/TaskItem.vue'
