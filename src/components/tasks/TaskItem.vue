@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Play, Check, Undo2, Clock, MoreVertical } from 'lucide-vue-next'
 import { useTaskStore } from '@/stores/tasks'
 import { useTimerStore } from '@/stores/timer'
+import { useGamificationStore } from '@/stores/gamification'
 import DeleteTask from './DeleteTask.vue'
 import EditTask from './EditTask.vue'
 import ToolTipWrapper from '../ui/tooltip/TooltipWrapper.vue'
@@ -12,8 +13,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { formatDate, formatTimeOnly, formatDuration, formatTotalDuration, getDeadlineStatus } from '@/utils/formatters'
 import { Badge } from '@/components/ui/badge'
+import MarkAsDone from './MarkAsDone.vue'
 
-import confetti from 'canvas-confetti'
 
 const props = defineProps<{
     task: Task
@@ -25,6 +26,7 @@ const emit = defineEmits(['start-timer', 'stop-timer'])
 
 const taskStore = useTaskStore()
 const timerStore = useTimerStore()
+const gamificationStore = useGamificationStore()
 
 const deadlineStatus = computed(() => {
     if (!props.task.deadline) return null
@@ -44,18 +46,11 @@ const totalDuration = computed(() => {
     return timers.reduce((acc, timer) => acc + (timer.duration || 0), 0)
 })
 
-const markAsComplete = () => {
-    taskStore.updateTask(props.task.id, { completed: true })
-    confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { y: 0.6 },
-        colors: ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
-    })
-}
 
-const markAsIncomplete = () => {
-    taskStore.updateTask(props.task.id, { completed: false })
+
+const markAsIncomplete = async () => {
+    await taskStore.updateTask(props.task.id, { completed: false })
+    await gamificationStore.revokeXP('task_completion', props.task.id)
 }
 </script>
 
@@ -71,10 +66,10 @@ const markAsIncomplete = () => {
                             :class="{ 'text-blue-700': isActive, 'line-through text-gray-500': task.completed }">
                             {{ task.title }}
                         </h3>
-                        
+
                         <div class="flex items-center gap-2 flex-wrap">
-                            <Badge v-if="deadlineStatus && !task.completed" 
-                                :variant="deadlineStatus.overdue ? 'destructive' : (deadlineStatus.isClose ? 'default' : 'outline')" 
+                            <Badge v-if="deadlineStatus && !task.completed"
+                                :variant="deadlineStatus.overdue ? 'destructive' : (deadlineStatus.isClose ? 'default' : 'outline')"
                                 class="text-xs">
                                 {{ deadlineStatus.label }}
                             </Badge>
@@ -84,7 +79,7 @@ const markAsIncomplete = () => {
                                 <Check class="w-3 h-3" />
                                 Done
                             </div>
-                            
+
                             <div v-if="totalDuration > 0"
                                 class="text-xs font-mono bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full border border-blue-200 font-medium">
                                 {{ formatTotalDuration(totalDuration) }}
@@ -93,7 +88,8 @@ const markAsIncomplete = () => {
                     </div>
 
                     <!-- Description -->
-                    <p v-if="task.description" class="text-sm text-gray-600 leading-relaxed line-clamp-2" :title="task.description">
+                    <p v-if="task.description" class="text-sm text-gray-600 leading-relaxed line-clamp-2"
+                        :title="task.description">
                         {{ task.description }}
                     </p>
 
@@ -116,8 +112,11 @@ const markAsIncomplete = () => {
                         </Button>
                     </ToolTipWrapper>
 
-                    <ToolTipWrapper v-else-if="!task.completed" text="Start Focus Session">
-                        <Button variant="outline" size="sm" class="rounded-lg hover:bg-blue-50 hover:border-blue-300" @click="$emit('start-timer', task)">
+                    <ToolTipWrapper v-else-if="!task.completed"
+                        :text="timerStore.activeTimer ? 'Complete or stop your current focus session first' : 'Start Focus Session'">
+                        <Button variant="outline" size="sm"
+                            class="rounded-lg hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
+                            @click="$emit('start-timer', task)" :disabled="!!timerStore.activeTimer">
                             <Play class="w-3.5 h-3.5 mr-1" />
                             Focus
                         </Button>
@@ -125,7 +124,8 @@ const markAsIncomplete = () => {
 
                     <!-- Undo Button (for completed tasks) -->
                     <ToolTipWrapper v-if="task.completed" text="Undo Completion">
-                        <Button variant="ghost" size="sm" class="rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                        <Button variant="ghost" size="sm"
+                            class="rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                             @click="markAsIncomplete">
                             <Undo2 class="w-4 h-4" />
                         </Button>
@@ -134,19 +134,15 @@ const markAsIncomplete = () => {
                     <!-- More Actions Popover -->
                     <Popover>
                         <PopoverTrigger as-child>
-                            <Button variant="ghost" size="sm" class="rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100">
+                            <Button variant="ghost" size="sm"
+                                class="rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100">
                                 <MoreVertical class="w-4 h-4" />
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent class="w-48 p-2" align="end">
                             <div class="flex flex-col gap-1">
-                                <!-- Mark as Complete/Incomplete -->
-                                <Button v-if="!task.completed" variant="ghost" size="sm" 
-                                    class="justify-start text-sm font-normal hover:bg-green-50 hover:text-green-700"
-                                    @click="markAsComplete">
-                                    <Check class="w-4 h-4 mr-2" />
-                                    Mark as Done
-                                </Button>
+                          
+                                <MarkAsDone :task="task" as-menu-item :totalDuration="totalDuration" />
 
                                 <!-- Edit Task -->
                                 <EditTask :task="task" as-menu-item />
@@ -176,7 +172,8 @@ const markAsIncomplete = () => {
                             class="flex justify-between items-center text-xs text-gray-600 bg-white rounded-lg px-3 py-2 border border-gray-200">
                             <span class="font-medium">{{ formatDate(timer.start_time) }} - {{ timer.end_time ?
                                 formatTimeOnly(timer.end_time) : 'Now' }}</span>
-                            <span class="font-mono text-blue-700 font-semibold bg-blue-50 px-2 py-0.5 rounded">{{ formatDuration(timer.duration) }}</span>
+                            <span class="font-mono text-blue-700 font-semibold bg-blue-50 px-2 py-0.5 rounded">{{
+                                formatDuration(timer.duration) }}</span>
                         </div>
                     </div>
                 </AccordionContent>

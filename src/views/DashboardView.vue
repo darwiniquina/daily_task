@@ -2,6 +2,7 @@
 import { onMounted, computed, ref, watch } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
 import { useTimerStore } from '@/stores/timer'
+import { useGamificationStore } from '@/stores/gamification'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import TaskItem from '@/components/tasks/TaskItem.vue'
@@ -17,6 +18,7 @@ import AppHeader from '@/components/layout/AppHeader.vue'
 
 const taskStore = useTaskStore()
 const timerStore = useTimerStore()
+const gamificationStore = useGamificationStore()
 
 const showFocusModal = ref(false)
 
@@ -39,8 +41,30 @@ const startTimer = async (task: Task) => {
 }
 
 const stopTimer = async () => {
+  const durationInSeconds = timerStore.elapsedTime
+  const timerId = timerStore.activeTimer?.id
+  
   await timerStore.stopTimer()
   showFocusModal.value = false
+
+  // XP calculation: 1 XP per minute
+  if (durationInSeconds > 0 && timerId) {
+    let xpReward = Math.floor(durationInSeconds / 60)
+    
+    // Bonus for 25min+ sessions (Standard Pomodoro)
+    if (durationInSeconds >= 25 * 60) {
+      xpReward += 10 
+    }
+    
+    // Minimum 1 XP for any focused time
+    if (xpReward === 0 && durationInSeconds > 30) {
+        xpReward = 1
+    }
+
+    if (xpReward > 0) {
+        await gamificationStore.addXP(xpReward, 'focus_session', timerId)
+    }
+  }
 }
 
 const activeTask = computed(() => {
