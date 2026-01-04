@@ -52,7 +52,7 @@ export const getDeadlineStatus = (deadline: string) => {
 
     return {
         overdue,
-        label: overdue ? `Overdue ${distance}` : `Due ${distance}`,
+        label: overdue ? `${distance}` : `Due ${distance}`,
         isClose: !overdue && (date.getTime() - Date.now()) < 3600000 * 24 // Close if within 24 hours
     }
 }

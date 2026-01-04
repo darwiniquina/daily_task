@@ -18,6 +18,7 @@ import confetti from 'canvas-confetti'
 const props = defineProps<{
     task: Task
     isActive?: boolean
+    viewOnly?: boolean
 }>()
 
 const emit = defineEmits(['start-timer', 'stop-timer'])
@@ -106,7 +107,7 @@ const markAsIncomplete = () => {
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex items-start gap-1.5 shrink-0">
+                <div v-if="!viewOnly" class="flex items-start gap-1.5 shrink-0">
                     <!-- Focus/Stop Button -->
                     <ToolTipWrapper v-if="isActive" text="Stop Focus">
                         <Button variant="default" size="sm" class="rounded-lg" @click="$emit('stop-timer', task)">
