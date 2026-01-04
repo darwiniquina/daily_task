@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { formatDate, formatTimeOnly, formatDuration, formatTotalDuration, getDeadlineStatus } from '@/utils/formatters'
 import { Badge } from '@/components/ui/badge'
 import MarkAsDone from './MarkAsDone.vue'
+import { useProductivityTheme } from '@/composables/useProductivityTheme'
 
 
 const props = defineProps<{
@@ -27,6 +28,7 @@ const emit = defineEmits(['start-timer', 'stop-timer'])
 const taskStore = useTaskStore()
 const timerStore = useTimerStore()
 const gamificationStore = useGamificationStore()
+const { theme } = useProductivityTheme()
 
 const deadlineStatus = computed(() => {
     if (!props.task.deadline) return null
@@ -56,14 +58,20 @@ const markAsIncomplete = async () => {
 
 <template>
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-gray-300 group"
-        :class="{ 'ring-2 ring-blue-400 border-blue-400 shadow-blue-50': isActive, 'bg-green-50/30 border-green-200': task.completed }">
+        :class="[
+            isActive ? `ring-2 ring-${theme.primary} border-${theme.primary} shadow-${theme.primary}/20` : '',
+            task.completed ? 'bg-green-50/30 border-green-200' : ''
+        ]">
         <div class="p-5">
             <div class="flex items-start justify-between gap-4">
                 <div class="flex-1 min-w-0 space-y-2.5">
                     <!-- Title & Status Row -->
                     <div class="flex items-start gap-3 flex-wrap">
                         <h3 class="font-semibold text-gray-900 text-lg leading-tight flex-1 min-w-0"
-                            :class="{ 'text-blue-700': isActive, 'line-through text-gray-500': task.completed }">
+                            :class="[
+                                isActive ? `text-${theme.primary}` : '',
+                                task.completed ? 'line-through text-gray-500' : ''
+                            ]">
                             {{ task.title }}
                         </h3>
 
@@ -81,7 +89,8 @@ const markAsIncomplete = async () => {
                             </div>
 
                             <div v-if="totalDuration > 0"
-                                class="text-xs font-mono bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full border border-blue-200 font-medium">
+                                class="text-xs font-mono px-2.5 py-1 rounded-full border font-medium"
+                                :class="[`bg-${theme.light}`, `text-${theme.secondary}`, `border-${theme.accent}/30`]">
                                 {{ formatTotalDuration(totalDuration) }}
                             </div>
                         </div>

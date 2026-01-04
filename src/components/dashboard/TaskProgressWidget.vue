@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useProductivityTheme } from '@/composables/useProductivityTheme'
 
 const props = defineProps<{
   tasks: any[]
 }>()
+
+const { theme } = useProductivityTheme()
 
 const today = new Date().toLocaleDateString('en-CA')
 
@@ -26,16 +29,16 @@ const progressPercentage = computed(() => {
 </script>
 
 <template>
-  <div class="bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-800 rounded-3xl p-6 text-white shadow-xl shadow-blue-100 relative overflow-hidden">
+  <div :class="['rounded-3xl p-6 text-white shadow-xl relative overflow-hidden transition-all duration-700 bg-gradient-to-br', theme.gradient]">
     <div class="relative z-10">
       <div class="flex items-center justify-between mb-2">
-        <h3 class="text-xs font-bold uppercase tracking-widest text-indigo-100/80">Daily Progress</h3>
+        <h3 class="text-xs font-bold uppercase tracking-widest text-white/70">Daily Progress</h3>
       </div>
       
       <div class="flex items-center justify-between">
         <div class="space-y-1">
           <span class="block text-4xl font-black leading-none tracking-tighter">{{ progressPercentage }}%</span>
-          <span class="block text-[10px] font-bold uppercase tracking-wider text-indigo-200">Task Completion</span>
+          <span class="block text-[10px] font-bold uppercase tracking-wider text-white/60">Task Completion</span>
         </div>
         
         <div class="h-16 w-16 relative">
@@ -53,14 +56,14 @@ const progressPercentage = computed(() => {
         </div>
       </div>
 
-      <p class="mt-4 text-xs text-indigo-100/60 font-medium">
+      <p class="mt-4 text-xs text-white/60 font-medium">
         {{ completedToday === totalToday && totalToday > 0 ? "All caught up! Dynamic work today." : `${completedToday} of ${totalToday} tasks finished` }}
       </p>
     </div>
 
     <!-- Background Accents -->
     <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-2xl"></div>
-    <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-indigo-400/20 rounded-full blur-3xl"></div>
+    <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
   </div>
 </template>
 

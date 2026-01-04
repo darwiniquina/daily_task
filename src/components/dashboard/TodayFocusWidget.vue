@@ -11,31 +11,17 @@ import {
   Award
 } from 'lucide-vue-next'
 
+import { useProductivityTheme } from '@/composables/useProductivityTheme'
+
 const timerStore = useTimerStore()
 const taskStore = useTaskStore()
+const { focusHours, totalFocusSecondsToday, theme } = useProductivityTheme()
 
 const today = new Date().toLocaleDateString('en-CA')
 
-// Calculate total focus time for today including active timer
-const totalFocusSecondsToday = computed(() => {
-  let total = timerStore.todaysFocusSeconds
-
-  const activeStart = timerStore.activeTimer?.start_time as string | undefined
-  if (activeStart && activeStart.startsWith(today)) {
-    total += timerStore.elapsedTime
-  }
-
-  return total
-})
-
-// Convert seconds to hours with decimals
-const focusHours = computed(() => {
-  return (totalFocusSecondsToday.value / 3600).toFixed(1)
-})
-
 // Get motivational message based on focus time
 const motivationalMessage = computed(() => {
-  const hours = parseFloat(focusHours.value)
+  const hours = focusHours.value
 
   if (hours === 0) {
     return {
@@ -78,20 +64,8 @@ const motivationalMessage = computed(() => {
 
 // Calculate streak intensity (for visual effects)
 const streakIntensity = computed(() => {
-  const hours = parseFloat(focusHours.value)
+  const hours = focusHours.value
   return Math.min(100, (hours / 8) * 100) // Max at 8 hours
-})
-
-// Get gradient based on focus time
-const gradientClass = computed(() => {
-  const hours = parseFloat(focusHours.value)
-
-  if (hours === 0) return 'from-gray-400 via-gray-500 to-gray-600'
-  if (hours < 1) return 'from-blue-400 via-blue-500 to-blue-600'
-  if (hours < 2) return 'from-purple-400 via-purple-500 to-purple-600'
-  if (hours < 4) return 'from-orange-400 via-orange-500 to-red-500'
-  if (hours < 6) return 'from-red-400 via-pink-500 to-purple-600'
-  return 'from-yellow-400 via-orange-500 to-red-600'
 })
 
 // Fetch today's focus time on mount
@@ -105,7 +79,7 @@ const previousHours = ref(0)
 
 // Watch for milestones
 const checkMilestone = () => {
-  const current = parseFloat(focusHours.value)
+  const current = focusHours.value
   const milestones = [1, 2, 3, 4, 5, 6, 8]
 
   for (const milestone of milestones) {
@@ -131,7 +105,7 @@ computed(() => {
     <!-- Main Card -->
     <div :class="[
       'bg-gradient-to-br rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden transition-all duration-700',
-      gradientClass
+      theme.gradient
     ]">
       <!-- Animated Background Elements -->
       <div class="absolute inset-0 opacity-20">
@@ -187,7 +161,7 @@ computed(() => {
           </div>
           <div class="flex items-center gap-2 text-white/80">
             <Clock class="w-4 h-4" />
-            <span class="text-sm font-bold">{{ focusHours }}h of deep work</span>
+            <span class="text-sm font-bold">{{ focusHours.toFixed(1) }}h of deep work</span>
           </div>
         </div>
 
@@ -237,7 +211,7 @@ computed(() => {
               <Sparkles class="w-4 h-4 text-white/80" />
               <span class="text-xs font-bold text-white/60 uppercase tracking-wider">Streak</span>
             </div>
-            <span class="text-2xl font-black text-white">{{ Math.floor(parseFloat(focusHours)) }}h</span>
+            <span class="text-2xl font-black text-white">{{ Math.floor(focusHours) }}h</span>
           </div>
         </div>
       </div>

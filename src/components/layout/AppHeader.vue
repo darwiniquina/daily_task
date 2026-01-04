@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button'
 import { Zap, LogOut, Calendar, LayoutDashboard, Flame } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { Progress } from '@/components/ui/progress'
+import { useProductivityTheme } from '@/composables/useProductivityTheme'
 
 const authStore = useAuthStore()
 const gamificationStore = useGamificationStore()
 const router = useRouter()
 const route = useRoute()
+const { theme } = useProductivityTheme()
 
 onMounted(async () => {
   if (authStore.user) {
@@ -32,7 +34,7 @@ const handleLogout = async () => {
     <div class="container mx-auto px-6 h-20 flex items-center justify-between">
       <div class="flex items-center gap-8">
         <div class="flex items-center gap-2 cursor-pointer" @click="router.push('/')">
-          <div class="bg-blue-600 p-1.5 rounded-lg shadow-lg shadow-blue-500/20">
+          <div :class="`bg-${theme.primary}`" class="p-1.5 rounded-lg shadow-lg transition-all duration-700">
             <Zap class="h-5 w-5 text-white" />
           </div>
           <h1 class="text-xl font-black tracking-tight text-gray-900">Tasko</h1>
@@ -42,8 +44,8 @@ const handleLogout = async () => {
           <Button 
             :variant="route.path === '/' ? 'secondary' : 'ghost'" 
             size="sm" 
-            class="gap-2 rounded-xl h-9 px-4"
-            :class="route.path === '/' ? 'bg-blue-50 text-blue-700 hover:bg-blue-100' : ''"
+            class="gap-2 rounded-xl h-9 px-4 transition-all duration-700"
+            :class="route.path === '/' ? `bg-${theme.light} text-${theme.secondary} hover:opacity-80` : ''"
             @click="router.push('/')"
           >
             <LayoutDashboard class="h-4 w-4" />
@@ -52,8 +54,8 @@ const handleLogout = async () => {
           <Button 
             :variant="route.path === '/history' ? 'secondary' : 'ghost'" 
             size="sm" 
-            class="gap-2 rounded-xl h-9 px-4"
-            :class="route.path === '/history' ? 'bg-blue-50 text-blue-700 hover:bg-blue-100' : ''"
+            class="gap-2 rounded-xl h-9 px-4 transition-all duration-700"
+            :class="route.path === '/history' ? `bg-${theme.light} text-${theme.secondary} hover:opacity-80` : ''"
             @click="router.push('/history')"
           >
             <Calendar class="h-4 w-4" />
@@ -74,10 +76,10 @@ const handleLogout = async () => {
           <!-- Level & XP -->
           <div class="flex flex-col gap-1 w-32 md:w-44">
             <div class="flex justify-between items-end">
-              <span class="text-[10px] font-black uppercase tracking-widest text-blue-600">Level {{ gamificationStore.profile.level }}</span>
+              <span class="text-[10px] font-black uppercase tracking-widest transition-colors duration-700" :class="`text-${theme.primary}`">Level {{ gamificationStore.profile.level }}</span>
               <span class="text-[9px] font-bold text-gray-400">{{ Math.floor(gamificationStore.profile.xp) }} / {{ gamificationStore.xpToNextLevel }} XP</span>
             </div>
-            <Progress :value="gamificationStore.progressToNextLevel" class="h-1.5 bg-blue-100" />
+            <Progress :value="gamificationStore.progressToNextLevel" class="h-1.5 transition-all duration-700" :class="`bg-${theme.light}`" />
           </div>
         </div>
 
