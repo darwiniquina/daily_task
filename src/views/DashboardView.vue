@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { onMounted, computed, ref, watch } from 'vue'
-import { useAuthStore } from '@/stores/auth'
 import { useTaskStore } from '@/stores/tasks'
 import { useTimerStore } from '@/stores/timer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useRouter } from 'vue-router'
-import { toast } from 'vue-sonner'
 import TaskItem from '@/components/tasks/TaskItem.vue'
 import AddTask from '@/components/tasks/AddTask.vue'
 import FocusModal from '@/components/tasks/FocusModal.vue'
@@ -15,12 +12,11 @@ import TaskProgressWidget from '@/components/dashboard/TaskProgressWidget.vue'
 import ProTipWidget from '@/components/dashboard/ProTipWidget.vue'
 import type { Task } from '@/types'
 import { formatTimerDisplay } from '@/utils/formatters'
-import { Search, Zap, LogOut } from 'lucide-vue-next'
+import { Search } from 'lucide-vue-next'
+import AppHeader from '@/components/layout/AppHeader.vue'
 
-const authStore = useAuthStore()
 const taskStore = useTaskStore()
 const timerStore = useTimerStore()
-const router = useRouter()
 
 const showFocusModal = ref(false)
 
@@ -37,12 +33,6 @@ watch(() => timerStore.activeTimer, (newVal, oldVal) => {
     showFocusModal.value = true
   }
 })
-
-const handleLogout = async () => {
-  await authStore.signOut()
-  toast.success('Logged out successfully')
-  router.push('/auth')
-}
 
 const startTimer = async (task: Task) => {
   await timerStore.startTimer(task.id)
@@ -65,25 +55,7 @@ const formattedTime = computed(() => {
 
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
-    <header class="bg-white/80 backdrop-blur-md border-b sticky top-0 z-30">
-      <div class="container mx-auto px-6 h-16 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="bg-blue-600 p-1.5 rounded-lg">
-            <Zap class="h-5 w-5 text-white" />
-          </div>
-          <h1 class="text-xl font-black tracking-tight text-gray-900">DayTracker</h1>
-        </div>
-        <div class="flex items-center gap-4">
-          <div class="hidden md:flex flex-col items-end mr-2">
-            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Authenticated</span>
-            <span class="text-sm font-medium text-gray-700 leading-none">{{ authStore.user?.email }}</span>
-          </div>
-          <Button variant="ghost" size="icon" class="rounded-full hover:bg-gray-100" @click="handleLogout">
-            <LogOut class="h-5 w-5 text-gray-500" />
-          </Button>
-        </div>
-      </div>
-    </header>
+    <AppHeader />
 
     <main class="flex-1 container mx-auto px-6 py-10">
       <div class="max-w-6xl mx-auto">
