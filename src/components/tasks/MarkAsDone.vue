@@ -8,7 +8,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog'
-import { Check, Trophy, Star, PartyPopper } from 'lucide-vue-next'
+import { Check, Trophy, Star } from 'lucide-vue-next'
 import type { Task } from '@/types'
 import { useTaskStore } from '@/stores/tasks'
 import { useGamificationStore } from '@/stores/gamification'

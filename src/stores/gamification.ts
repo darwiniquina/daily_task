@@ -140,13 +140,10 @@ export const useGamificationStore = defineStore('gamification', () => {
 
         let newXP = profile.value.xp + delta
         let newLevel = profile.value.level
-        let leveledUp = false
-
         // Handle level up
         while (newXP >= newLevel * 100) {
             newXP -= newLevel * 100
             newLevel++
-            leveledUp = true
         }
 
         // Handle level down (if delta is negative)
