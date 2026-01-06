@@ -29,6 +29,8 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@iconify-json/radix-icons": "^1.2.6",
+    "@iconify/vue": "^5.0.0",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^24.10.4",
     "@vitejs/plugin-vue": "^6.0.1",

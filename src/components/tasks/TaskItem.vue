@@ -48,8 +48,6 @@ const totalDuration = computed(() => {
     return timers.reduce((acc, timer) => acc + (timer.duration || 0), 0)
 })
 
-
-
 const markAsIncomplete = async () => {
     await taskStore.updateTask(props.task.id, { completed: false })
     await gamificationStore.revokeXP('task_completion', props.task.id)
@@ -57,20 +55,20 @@ const markAsIncomplete = async () => {
 </script>
 
 <template>
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-gray-300 group"
+    <div class="rounded-2xl shadow-sm border border-black/5 dark:border-white/10 overflow-hidden transition-all duration-700 hover:shadow-lg dark:hover:shadow-white/5 group bg-white dark:bg-zinc-900/50 backdrop-blur-sm"
         :class="[
-            isActive ? `ring-2 ring-${theme.primary} border-${theme.primary} shadow-${theme.primary}/20` : '',
-            task.completed ? 'bg-green-50/30 border-green-200' : ''
+            isActive ? `ring-2 ring-${theme.primary}/50 border-${theme.primary} bg-${theme.light}/30 dark:bg-${theme.primary}/10 shadow-xl shadow-${theme.primary}/10` : '',
+            task.completed ? 'bg-green-50/30 dark:bg-green-900/10 border-green-200/50 dark:border-green-800/50' : ''
         ]">
         <div class="p-5">
             <div class="flex items-start justify-between gap-4">
                 <div class="flex-1 min-w-0 space-y-2.5">
                     <!-- Title & Status Row -->
                     <div class="flex items-start gap-3 flex-wrap">
-                        <h3 class="font-semibold text-gray-900 text-lg leading-tight flex-1 min-w-0"
+                        <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-lg leading-tight flex-1 min-w-0"
                             :class="[
                                 isActive ? `text-${theme.primary}` : '',
-                                task.completed ? 'line-through text-gray-500' : ''
+                                task.completed ? 'line-through text-gray-400 dark:text-gray-500' : ''
                             ]">
                             {{ task.title }}
                         </h3>
@@ -89,22 +87,24 @@ const markAsIncomplete = async () => {
                             </div>
 
                             <div v-if="totalDuration > 0"
-                                class="text-xs font-mono px-2.5 py-1 rounded-full border font-medium"
-                                :class="[`bg-${theme.light}`, `text-${theme.secondary}`, `border-${theme.accent}/30`]">
+                                class="text-xs font-mono px-2.5 py-1 rounded-full border border-current font-medium transition-all duration-700"
+                                :class="[`bg-${theme.light}/50 dark:bg-${theme.primary}/20`, `text-${theme.secondary} dark:text-${theme.primary}`]">
                                 {{ formatTotalDuration(totalDuration) }}
                             </div>
                         </div>
                     </div>
 
                     <!-- Description -->
-                    <p v-if="task.description" class="text-sm text-gray-600 leading-relaxed line-clamp-2"
+                    <p v-if="task.description"
+                        class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-2"
                         :title="task.description">
                         {{ task.description }}
                     </p>
 
                     <!-- Metadata -->
-                    <div class="flex items-center gap-4 text-xs text-gray-500">
-                        <span v-if="task.deadline" class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+                    <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                        <span v-if="task.deadline"
+                            class="flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-md">
                             <Clock class="w-3 h-3" />
                             <span class="font-medium">Due {{ formatDate(task.deadline) }}</span>
                         </span>
@@ -115,7 +115,9 @@ const markAsIncomplete = async () => {
                 <div v-if="!viewOnly" class="flex items-start gap-1.5 shrink-0">
                     <!-- Focus/Stop Button -->
                     <ToolTipWrapper v-if="isActive" text="Stop Focus">
-                        <Button variant="default" size="sm" class="rounded-lg" @click="$emit('stop-timer', task)">
+                        <Button variant="default" size="sm" class="rounded-lg transition-all duration-700"
+                            :class="`bg-${theme.primary} hover:bg-${theme.secondary} shadow-lg shadow-${theme.primary}/30`"
+                            @click="$emit('stop-timer', task)">
                             <span class="w-2 h-2 bg-white rounded-sm animate-pulse mr-1.5"></span>
                             Stop
                         </Button>
@@ -124,7 +126,8 @@ const markAsIncomplete = async () => {
                     <ToolTipWrapper v-else-if="!task.completed"
                         :text="timerStore.activeTimer ? 'Complete or stop your current focus session first' : 'Start Focus Session'">
                         <Button variant="outline" size="sm"
-                            class="rounded-lg hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
+                            class="rounded-lg transition-all duration-700 disabled:opacity-50"
+                            :class="`hover:bg-${theme.light} hover:border-${theme.accent}/50 hover:text-${theme.secondary}`"
                             @click="$emit('start-timer', task)" :disabled="!!timerStore.activeTimer">
                             <Play class="w-3.5 h-3.5 mr-1" />
                             Focus
@@ -134,7 +137,7 @@ const markAsIncomplete = async () => {
                     <!-- Undo Button (for completed tasks) -->
                     <ToolTipWrapper v-if="task.completed" text="Undo Completion">
                         <Button variant="ghost" size="sm"
-                            class="rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                            class="rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5"
                             @click="markAsIncomplete">
                             <Undo2 class="w-4 h-4" />
                         </Button>
@@ -150,7 +153,7 @@ const markAsIncomplete = async () => {
                         </PopoverTrigger>
                         <PopoverContent class="w-48 p-2" align="end">
                             <div class="flex flex-col gap-1">
-                          
+
                                 <MarkAsDone :task="task" as-menu-item :totalDuration="totalDuration" />
 
                                 <!-- Edit Task -->
@@ -169,20 +172,22 @@ const markAsIncomplete = async () => {
         <Accordion v-if="taskTimers.length > 0" type="single" collapsible class="w-full border-t border-gray-200">
             <AccordionItem value="history" class="border-b-0">
                 <AccordionTrigger
-                    class="px-5 py-3 hover:no-underline hover:bg-gray-50 text-xs text-gray-500 uppercase tracking-wide font-medium transition-colors">
+                    class="px-5 py-3 hover:no-underline hover:bg-gray-50 dark:hover:bg-white/5 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium transition-colors">
                     <div class="flex items-center gap-2">
                         <Clock class="w-3.5 h-3.5" />
                         Session History ({{ taskTimers.length }})
                     </div>
                 </AccordionTrigger>
-                <AccordionContent class="px-5 pb-4 pt-2 bg-gray-50/50">
+                <AccordionContent class="px-5 pb-4 pt-2 bg-gray-50/50 dark:bg-black/20">
                     <div class="space-y-2">
                         <div v-for="timer in taskTimers" :key="timer.id"
-                            class="flex justify-between items-center text-xs text-gray-600 bg-white rounded-lg px-3 py-2 border border-gray-200">
+                            class="flex justify-between items-center text-xs text-gray-600 dark:text-gray-300 bg-white dark:bg-zinc-800 rounded-lg px-3 py-2 border border-black/5 dark:border-white/5">
                             <span class="font-medium">{{ formatDate(timer.start_time) }} - {{ timer.end_time ?
                                 formatTimeOnly(timer.end_time) : 'Now' }}</span>
-                            <span class="font-mono text-blue-700 font-semibold bg-blue-50 px-2 py-0.5 rounded">{{
-                                formatDuration(timer.duration) }}</span>
+                            <span class="font-mono font-semibold px-2 py-0.5 rounded transition-all duration-700"
+                                :class="[`text-${theme.secondary} dark:text-${theme.primary}`, `bg-${theme.light} dark:bg-${theme.primary}/20`]">
+                                {{ formatDuration(timer.duration) }}
+                            </span>
                         </div>
                     </div>
                 </AccordionContent>

@@ -54,7 +54,7 @@ const formattedTime = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
+  <div class="min-h-screen flex flex-col">
     <AppHeader />
 
     <main class="flex-1 container mx-auto px-6 py-10">
@@ -62,10 +62,10 @@ const formattedTime = computed(() => {
         <!-- Header with Search and Add Task -->
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h2 class="text-2xl font-bold text-gray-900">Today's Tasks</h2>
+            <h2 class="text-2xl font-bold ">Today's Tasks</h2>
             <p class="text-sm text-gray-500">Manage and track your focus sessions</p>
           </div>
-          
+
           <div class="flex items-center gap-3 w-full sm:w-auto">
             <!-- Search -->
             <div class="relative flex-1 sm:flex-initial sm:w-64">
@@ -80,7 +80,7 @@ const formattedTime = computed(() => {
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+
           <!-- Left Column (Sidebar - Modular Widgets) -->
           <div class="lg:col-span-4 space-y-6 sticky top-24">
             <TodayFocusWidget />
@@ -90,7 +90,8 @@ const formattedTime = computed(() => {
 
           <!-- Right Column (Tasks Feed) -->
           <div class="lg:col-span-8 space-y-6">
-            <div v-if="taskStore.loading" class="flex flex-col items-center justify-center py-24 space-y-4 bg-white rounded-3xl border border-dashed shadow-sm">
+            <div v-if="taskStore.loading"
+              class="flex flex-col items-center justify-center py-24 space-y-4 bg-white rounded-3xl border border-dashed shadow-sm">
               <div class="relative h-12 w-12">
                 <div class="absolute inset-0 rounded-full border-4 border-blue-50 border-t-blue-600 animate-spin"></div>
               </div>
@@ -105,7 +106,10 @@ const formattedTime = computed(() => {
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">No tasks found</h3>
                 <p class="text-gray-500 max-w-sm mx-auto mb-8 text-lg">
-                  {{ taskStore.searchQuery ? "We couldn't find any tasks matching your search." : "You haven't added any tasks for today yet." }}
+                  {{ taskStore.searchQuery ?
+                    "We couldn't find any tasks matching your search." :
+                    "You haven't added any tasks for today yet."
+                  }}
                 </p>
                 <Button v-if="taskStore.searchQuery" variant="outline" size="lg" class="rounded-full px-8"
                   @click="taskStore.searchQuery = ''">
