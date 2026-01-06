@@ -1,29 +1,25 @@
 <script setup lang="ts">
 import { onMounted, ref, computed, watch } from 'vue'
-import { useAuthStore } from '@/stores/auth'
 import { useHistoryStore } from '@/stores/history'
-import { useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import ContributionGraph from '@/components/history/ContributionGraph.vue'
 import TaskItem from '@/components/tasks/TaskItem.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
-import { Clock, CheckCircle2, Trophy, Flame, Filter, Calendar as CalendarIcon } from 'lucide-vue-next'
+import { Clock, CheckCircle2, Trophy, Flame, Filter, Calendar as CalendarIcon, Zap } from 'lucide-vue-next'
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subDays } from 'date-fns'
 import { formatTotalDuration } from '@/utils/formatters'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { RangeCalendar } from '@/components/ui/range-calendar'
 import { CalendarDate } from '@internationalized/date'
 
-const authStore = useAuthStore()
 const historyStore = useHistoryStore()
-const router = useRouter()
 
 const selectedDate = ref(new Date().toLocaleDateString('en-CA'))
 
 // Range Filter Status
 const activeRangeType = ref<'week' | 'month' | 'year' | 'full' | 'custom'>('month')
 const todayDate = new Date()
-const calendarRange = ref({
+const calendarRange = ref<any>({
   start: new CalendarDate(todayDate.getFullYear(), todayDate.getMonth() + 1, 1),
   end: new CalendarDate(todayDate.getFullYear(), todayDate.getMonth() + 1, todayDate.getDate())
 })

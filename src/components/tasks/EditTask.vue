@@ -26,7 +26,6 @@ import type { Task } from '@/types'
 import ToolTipWrapper from '../ui/tooltip/TooltipWrapper.vue'
 import { format } from 'date-fns'
 import { CalendarDate, getLocalTimeZone } from '@internationalized/date'
-import type { DateValue } from '@internationalized/date'
 
 const props = defineProps<{
   task: Task
@@ -40,8 +39,8 @@ const loading = ref(false)
 const form = ref({
   title: '',
   description: '',
-  date: undefined as DateValue | undefined,
-  deadlineDate: undefined as DateValue | undefined,
+  date: undefined as any,
+  deadlineDate: undefined as any,
   deadlineTime: ''
 })
 
@@ -49,8 +48,10 @@ watch(open, (newValue) => {
   if (newValue) {
     let dateVal = undefined
     if (props.task.date) {
-      const parts = props.task.date.split('-').map(Number)
-      dateVal = new CalendarDate(parts[0], parts[1], parts[2])
+      const [y, m, d] = props.task.date.split('-').map(Number)
+      if (y !== undefined && m !== undefined && d !== undefined) {
+        dateVal = new CalendarDate(y, m, d)
+      }
     } else if (props.task.created_at) { // Fallback if no specific date set, use created_at
       const d = new Date(props.task.created_at)
       dateVal = new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate())
@@ -115,8 +116,10 @@ const onSubmit = async () => {
     if (form.value.deadlineDate) {
       const dDate = form.value.deadlineDate.toDate(getLocalTimeZone())
       if (form.value.deadlineTime) {
-        const [hours, minutes] = form.value.deadlineTime.split(':').map(Number)
-        dDate.setHours(hours, minutes)
+        const [h, min] = form.value.deadlineTime.split(':').map(Number)
+        if (h !== undefined && min !== undefined) {
+          dDate.setHours(h, min)
+        }
       } else {
         dDate.setHours(23, 59, 59)
       }
