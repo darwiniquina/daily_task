@@ -104,6 +104,11 @@ export const useGamificationStore = defineStore('gamification', () => {
 
         // 3. Update profile XP
         await updateProfileXP(amount)
+
+        // 4. Update local subtask XP if applicable
+        if (sourceType === 'subtask_completion') {
+            totalSubtaskXP.value += amount
+        }
     }
 
     const revokeXP = async (sourceType: string, sourceId: string) => {
@@ -133,6 +138,11 @@ export const useGamificationStore = defineStore('gamification', () => {
 
         // 3. Deduct XP from profile
         await updateProfileXP(-tx.amount)
+
+        // 4. Update local subtask XP if applicable
+        if (sourceType === 'subtask_completion') {
+            totalSubtaskXP.value -= tx.amount
+        }
     }
 
     const updateProfileXP = async (delta: number) => {
@@ -201,12 +211,30 @@ export const useGamificationStore = defineStore('gamification', () => {
         }
     }
 
+    const totalSubtaskXP = ref(0)
+
+    const fetchSubtaskXP = async () => {
+        if (!authStore.user) return
+
+        const { data, error } = await supabase
+            .from('xp_transactions')
+            .select('amount')
+            .eq('user_id', authStore.user.id)
+            .eq('source_type', 'subtask_completion')
+
+        if (!error && data) {
+            totalSubtaskXP.value = data.reduce((acc, tx) => acc + tx.amount, 0)
+        }
+    }
+
     return {
         profile,
         loading,
+        totalSubtaskXP,
         xpToNextLevel,
         progressToNextLevel,
         fetchProfile,
+        fetchSubtaskXP,
         addXP,
         revokeXP,
         updateStreak

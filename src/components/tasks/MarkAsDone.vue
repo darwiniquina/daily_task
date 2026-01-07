@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -8,7 +8,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog'
-import { Check, Trophy, Star } from 'lucide-vue-next'
+import { Check, Trophy, Star, ListTodo } from 'lucide-vue-next'
 import type { Task } from '@/types'
 import { useTaskStore } from '@/stores/tasks'
 import { useGamificationStore } from '@/stores/gamification'
@@ -19,7 +19,7 @@ const taskStore = useTaskStore()
 const gamificationStore = useGamificationStore()
 
 const open = ref(false)
-const totalExp = ref(0)
+const taskReward = ref(0) // XP awarded specifically at completion (Base + Focus)
 
 const props = defineProps<{
     task: Task
@@ -27,14 +27,24 @@ const props = defineProps<{
     totalDuration: number
 }>()
 
+const subtaskXP = computed(() => {
+    if (!props.task.subtasks) return 0
+    return props.task.subtasks.filter(s => s.completed).length * 3
+})
+
+const totalTaskWorth = computed(() => {
+    const focusXP = Math.floor(props.totalDuration / 60)
+    return 5 + focusXP + subtaskXP.value
+})
+
 
 const markAsComplete = async () => {
     // XP calculation: 5 XP base + 1 XP per minute of total focus
     const focusXP = Math.floor(props.totalDuration / 60)
-    totalExp.value = 5 + focusXP
+    taskReward.value = 5 + focusXP
 
     await taskStore.updateTask(props.task.id, { completed: true })
-    await gamificationStore.addXP(totalExp.value, 'task_completion', props.task.id)
+    await gamificationStore.addXP(taskReward.value, 'task_completion', props.task.id)
 
     open.value = true
 
@@ -91,14 +101,14 @@ const markAsComplete = async () => {
 
                     <div class="mt-8 space-y-4">
                         <div class="bg-white rounded-2xl p-6 shadow-sm border border-green-100 flex flex-col items-center gap-2">
-                            <p class="text-xs font-black uppercase tracking-[0.2em] text-green-500">Experience Gained</p>
+                            <p class="text-xs font-black uppercase tracking-[0.2em] text-green-500">Total Task Reward</p>
                             <div class="flex items-center gap-3">
-                                <span class="text-5xl font-black text-gray-900">+{{ totalExp }}</span>
+                                <span class="text-5xl font-black text-gray-900">+{{ totalTaskWorth }}</span>
                                 <span class="text-xl font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full uppercase tracking-tighter">XP</span>
                             </div>
                         </div>
 
-                        <div class="flex gap-2 text-sm text-gray-500 justify-center">
+                        <div class="flex flex-wrap gap-2 text-sm text-gray-500 justify-center px-4">
                             <div class="flex items-center gap-1 bg-white px-3 py-1.5 rounded-full border border-gray-100 shadow-sm">
                                 <Check class="w-3.5 h-3.5 text-green-500" />
                                 <span class="font-bold text-gray-700">5 XP</span> Base
@@ -106,6 +116,10 @@ const markAsComplete = async () => {
                             <div class="flex items-center gap-1 bg-white px-3 py-1.5 rounded-full border border-gray-100 shadow-sm font-bold">
                                 <Star class="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
                                 <span class="text-gray-700">{{ Math.floor(totalDuration / 60) }} XP</span> Focus
+                            </div>
+                            <div v-if="subtaskXP > 0" class="flex items-center gap-1 bg-white px-3 py-1.5 rounded-full border border-blue-100 shadow-sm font-bold">
+                                <ListTodo class="w-3.5 h-3.5 text-blue-500" />
+                                <span class="text-gray-700">{{ subtaskXP }} XP</span> Subtasks
                             </div>
                         </div>
                     </div>

@@ -41,7 +41,8 @@ const form = ref({
   description: '',
   date: undefined as any,
   deadlineDate: undefined as any,
-  deadlineTime: ''
+  deadlineTime: '',
+  subtasks: [] as { id?: string, title: string, completed: boolean }[]
 })
 
 watch(open, (newValue) => {
@@ -74,7 +75,8 @@ watch(open, (newValue) => {
       description: props.task.description || '',
       date: dateVal,
       deadlineDate: deadlineDateVal,
-      deadlineTime: deadlineTimeVal
+      deadlineTime: deadlineTimeVal,
+      subtasks: props.task.subtasks ? props.task.subtasks.map(s => ({ ...s })) : []
     }
   }
 })
@@ -94,6 +96,18 @@ const deadlineDisplay = computed(() => {
   }
   return dateStr
 })
+
+const addInlineSubtask = () => {
+  form.value.subtasks.push({ title: '', completed: false })
+}
+
+const removeSubtask = async (index: number) => {
+  const subtask = form.value.subtasks[index]
+  if (subtask && subtask.id) {
+    await taskStore.deleteSubtask(props.task.id, subtask.id)
+  }
+  form.value.subtasks.splice(index, 1)
+}
 
 const onSubmit = async () => {
   if (!form.value.title.trim()) {
@@ -132,6 +146,13 @@ const onSubmit = async () => {
       date: dateStr,
       deadline: deadlineISO || undefined
     })
+
+    // Handle new subtasks (those without an id)
+    const newSubtasks = form.value.subtasks.filter(s => !s.id && s.title.trim() !== '')
+    for (const s of newSubtasks) {
+      await taskStore.addSubtask(props.task.id, s.title)
+    }
+
     open.value = false
     toast.success('Task updated successfully')
   } catch (e: any) {
@@ -224,6 +245,36 @@ const onSubmit = async () => {
               </div>
             </PopoverContent>
           </Popover>
+        </div>
+
+        <!-- Subtasks Repeater -->
+        <div class="space-y-3 pt-2">
+          <div class="flex items-center justify-between">
+            <Label class="text-xs font-black uppercase tracking-widest text-gray-500">Subtasks</Label>
+            <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">{{ form.subtasks.length }} items</span>
+          </div>
+          
+          <div v-if="form.subtasks.length > 0" class="space-y-2 max-h-[150px] overflow-y-auto pr-1 custom-scrollbar">
+            <div v-for="(subtask, index) in form.subtasks" :key="index" class="flex items-center gap-2 group animate-in slide-in-from-left-2 duration-300">
+              <div class="flex-1 relative">
+                <Input v-model="subtask.title" placeholder="What needs to be done?" 
+                  class="h-9 pr-8"
+                  :disabled="loading" />
+                <div class="absolute left-[-15px] top-1/2 -translate-y-1/2 w-1 h-4 bg-blue-500 rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+              </div>
+              <Button type="button" variant="ghost" size="sm" 
+                class="h-9 w-9 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                @click="removeSubtask(index)">
+                <Plus class="w-4 h-4 rotate-45" />
+              </Button>
+            </div>
+          </div>
+
+          <Button type="button" variant="outline" size="sm" 
+            class="w-full border-dashed border-2 font-bold hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all h-10"
+            @click="addInlineSubtask">
+            <Plus class="w-4 h-4 mr-2" /> Add Step
+          </Button>
         </div>
 
         <DialogFooter>

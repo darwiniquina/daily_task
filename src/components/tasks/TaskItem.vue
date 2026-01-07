@@ -2,7 +2,7 @@
 import { onMounted, computed } from 'vue'
 import { type Task } from '@/types'
 import { Button } from '@/components/ui/button'
-import { Play, Check, Undo2, Clock, MoreVertical } from 'lucide-vue-next'
+import { Play, Check, Undo2, Clock, MoreVertical, ListTodo } from 'lucide-vue-next'
 import { useTaskStore } from '@/stores/tasks'
 import { useTimerStore } from '@/stores/timer'
 import { useGamificationStore } from '@/stores/gamification'
@@ -51,6 +51,16 @@ const totalDuration = computed(() => {
 const markAsIncomplete = async () => {
     await taskStore.updateTask(props.task.id, { completed: false })
     await gamificationStore.revokeXP('task_completion', props.task.id)
+}
+
+const toggleSubtask = async (subtask: any) => {
+    const newState = !subtask.completed
+    await taskStore.toggleSubtask(props.task.id, subtask.id, newState)
+    if (newState) {
+        await gamificationStore.addXP(3, 'subtask_completion', subtask.id)
+    } else {
+        await gamificationStore.revokeXP('subtask_completion', subtask.id)
+    }
 }
 </script>
 
@@ -105,9 +115,42 @@ const markAsIncomplete = async () => {
                     <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                         <span v-if="task.deadline"
                             class="flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-md">
-                            <Clock class="w-3 h-3" />
+                            <Clock class="w-3.5 h-3.5" />
                             <span class="font-medium">Due {{ formatDate(task.deadline) }}</span>
                         </span>
+                    </div>
+
+                    <!-- Subtasks Section -->
+                    <div v-if="task.subtasks && task.subtasks.length > 0" class="pt-2 space-y-2">
+                        <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                            <div class="flex items-center gap-1.5">
+                                <ListTodo class="w-3 h-3" />
+                                <span>Subtasks ({{ task.subtasks.filter(s => s.completed).length }}/{{ task.subtasks.length }})</span>
+                            </div>
+                            <div class="h-1.5 w-24 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-green-500 transition-all duration-500"
+                                    :style="{ width: `${(task.subtasks.filter(s => s.completed).length / task.subtasks.length) * 100}%` }">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid gap-1.5">
+                            <div v-for="subtask in task.subtasks" :key="subtask.id"
+                                class="flex items-center gap-2 group/subtask cursor-pointer select-none"
+                                @click.stop="toggleSubtask(subtask)">
+                                <div class="w-4 h-4 rounded border flex items-center justify-center transition-all duration-300"
+                                    :class="[
+                                        subtask.completed 
+                                            ? 'bg-green-500 border-green-500 text-white' 
+                                            : 'border-gray-300 dark:border-white/10 group-hover/subtask:border-green-400'
+                                    ]">
+                                    <Check v-if="subtask.completed" class="w-2.5 h-2.5" />
+                                </div>
+                                <span class="text-sm transition-all duration-300"
+                                    :class="subtask.completed ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'">
+                                    {{ subtask.title }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

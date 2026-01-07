@@ -34,7 +34,8 @@ const form = ref({
   description: '',
   date: undefined as any,
   deadlineDate: undefined as any,
-  deadlineTime: ''
+  deadlineTime: '',
+  subtasks: [] as string[]
 })
 
 watch(open, (isOpen) => {
@@ -43,6 +44,7 @@ watch(open, (isOpen) => {
     form.value.date = new CalendarDate(today.getFullYear(), today.getMonth() + 1, today.getDate())
     form.value.deadlineDate = undefined
     form.value.deadlineTime = ''
+    form.value.subtasks = []
   }
 })
 
@@ -98,8 +100,9 @@ const onSubmit = async () => {
       date: dateStr,
       deadline: deadlineISO,
       completed: false
-    })
-    form.value = { title: '', description: '', date: undefined, deadlineDate: undefined, deadlineTime: '' }
+    }, form.value.subtasks.filter(s => s.trim() !== ''))
+    
+    form.value = { title: '', description: '', date: undefined, deadlineDate: undefined, deadlineTime: '', subtasks: [] }
     open.value = false
   } catch (e) {
     // handled in store
@@ -179,6 +182,36 @@ const onSubmit = async () => {
               </div>
             </PopoverContent>
           </Popover>
+        </div>
+
+        <!-- Subtasks Repeater -->
+        <div class="space-y-3 pt-2">
+          <div class="flex items-center justify-between">
+            <Label class="text-xs font-black uppercase tracking-widest text-gray-500">Subtasks</Label>
+            <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">{{ form.subtasks.length }} items</span>
+          </div>
+          
+          <div v-if="form.subtasks.length > 0" class="space-y-2 max-h-[150px] overflow-y-auto pr-1 custom-scrollbar">
+            <div v-for="(_, index) in form.subtasks" :key="index" class="flex items-center gap-2 group animate-in slide-in-from-left-2 duration-300">
+              <div class="flex-1 relative">
+                <Input v-model="form.subtasks[index]" placeholder="What needs to be done?" 
+                  class="h-9 pr-8"
+                  :disabled="loading" />
+                <div class="absolute left-[-15px] top-1/2 -translate-y-1/2 w-1 h-4 bg-blue-500 rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+              </div>
+              <Button type="button" variant="ghost" size="sm" 
+                class="h-9 w-9 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                @click="form.subtasks.splice(index, 1)">
+                <Plus class="w-4 h-4 rotate-45" />
+              </Button>
+            </div>
+          </div>
+
+          <Button type="button" variant="outline" size="sm" 
+            class="w-full border-dashed border-2 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all h-10 font-bold"
+            @click="form.subtasks.push('')">
+            <Plus class="w-4 h-4 mr-2" /> Add Sub tasks
+          </Button>
         </div>
 
         <DialogFooter>
