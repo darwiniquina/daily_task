@@ -123,3 +123,28 @@ create policy "Users can view and edit their own timers"
   on public.timers
   for all
   using (auth.uid() = user_id);
+
+-- Create subtasks table
+create table public.subtasks (
+  id uuid not null default gen_random_uuid(),
+  task_id uuid not null references public.tasks (id) on delete cascade,
+  title text not null,
+  completed boolean not null default false,
+  created_at timestamp with time zone not null default now(),
+  constraint subtasks_pkey primary key (id)
+);
+
+-- Enable RLS on subtasks
+alter table public.subtasks enable row level security;
+
+-- Policy for subtasks
+create policy "Users can view and edit subtasks of their own tasks"
+  on public.subtasks
+  for all
+  using (
+    exists (
+      select 1 from public.tasks
+      where tasks.id = subtasks.task_id
+      and tasks.user_id = auth.uid()
+    )
+  );
