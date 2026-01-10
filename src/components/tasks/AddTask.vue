@@ -210,7 +210,7 @@ const onSubmit = async () => {
           <Button type="button" variant="outline" size="sm" 
             class="w-full border-dashed border-2 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all h-10 font-bold"
             @click="form.subtasks.push('')">
-            <Plus class="w-4 h-4 mr-2" /> Add Sub tasks
+            <Plus class="w-4 h-4 mr-2" /> Add Subtasks
           </Button>
         </div>
 
